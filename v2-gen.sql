@@ -1,55 +1,44 @@
-/**
-  @author
- */
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    username TEXT NOT NULL,
-    email TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS orders (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id),
-    order_date TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS order_items (
-    id SERIAL PRIMARY KEY,
-    order_id INT REFERENCES orders(id),
-    product_name TEXT NOT NULL,
-    quantity INT NOT NULL CHECK (quantity > 0),
-    price NUMERIC(10, 2) NOT NULL CHECK (price > 0)
-);
-
--- Генерация пользователей
-INSERT INTO users (username, email, created_at)
+-- Генерация издателей
+INSERT INTO Publishers (name, location)
 SELECT 
-    'user_' || i AS username,
-    'user_' || i || '@example.com' AS email,
-    NOW() - (random() * interval '1 year')
-FROM generate_series(1, 100) AS i;
+    'Publisher_' || i AS name,
+    'City_' || (random() * 50 + 1)::INT AS location
+FROM generate_series(1, 10) AS i;
 
--- Генерация заказов с проверкой наличия пользователей
-INSERT INTO orders (user_id, order_date)
+-- Генерация авторов
+INSERT INTO Authors (name, email)
 SELECT 
-    (SELECT id FROM users ORDER BY random() LIMIT 1) AS user_id,
-    NOW() - (random() * interval '6 months')
+    'Author_' || i AS name,
+    'author_' || i || '@example.com' AS email
+FROM generate_series(1, 50) AS i;
+
+-- Генерация книг с проверкой наличия авторов и издателей
+INSERT INTO Books (title, published_year, author_id, publisher_id)
+SELECT 
+    'Book_' || i AS title,
+    (random() * 523 + 1500)::INT AS published_year, 
+    (SELECT id FROM Authors ORDER BY random() LIMIT 1) AS author_id,
+    (SELECT id FROM Publishers ORDER BY random() LIMIT 1) AS publisher_id
 FROM generate_series(1, 200) AS i
-WHERE EXISTS (SELECT 1 FROM users); -- Проверяем есть ли пользователи
+WHERE EXISTS (SELECT 1 FROM Authors) AND EXISTS (SELECT 1 FROM Publishers);
 
--- Генерация элементов заказа с проверкой наличия заказов
-INSERT INTO order_items (order_id, product_name, quantity, price)
+-- Генерация жанров
+INSERT INTO Genres (name)
+SELECT DISTINCT 'Genre_' || i
+FROM generate_series(1, 20) AS i;
+
+-- Генерация связи книг и жанров каждая книга получает от 1 до 3 жанров
+INSERT INTO Book_Genres (book_id, genre_id)
 SELECT 
-    (SELECT id FROM orders ORDER BY random() LIMIT 1) AS order_id,
-    'Product_' || (random() * 50 + 1)::INT AS product_name, 
-    (random() * 10 + 1)::INT AS quantity,
-    (random() * 100 + 1)::NUMERIC(10, 2) AS price
-FROM generate_series(1, 500) AS i
-WHERE EXISTS (SELECT 1 FROM orders); -- Проверяем есть ли заказы
+    (SELECT id FROM Books ORDER BY random() LIMIT 1) AS book_id,
+    (SELECT id FROM Genres ORDER BY random() LIMIT 1) AS genre_id
+FROM generate_series(1, 300) AS i
+WHERE EXISTS (SELECT 1 FROM Books) AND EXISTS (SELECT 1 FROM Genres);
 
 -- Проверяем итоговое количество записей
 SELECT 
-    (SELECT COUNT(*) FROM users) AS total_users,
-    (SELECT COUNT(*) FROM orders) AS total_orders,
-    (SELECT COUNT(*) FROM order_items) AS total_order_items;
+    (SELECT COUNT(*) FROM Publishers) AS total_publishers,
+    (SELECT COUNT(*) FROM Authors) AS total_authors,
+    (SELECT COUNT(*) FROM Books) AS total_books,
+    (SELECT COUNT(*) FROM Genres) AS total_genres,
+    (SELECT COUNT(*) FROM Book_Genres) AS total_book_genres;
