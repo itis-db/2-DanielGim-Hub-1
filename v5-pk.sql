@@ -15,12 +15,11 @@ ALTER TABLE authors DROP CONSTRAINT IF EXISTS authors_pkey;
 ALTER TABLE publishers DROP CONSTRAINT IF EXISTS publishers_pkey;
 ALTER TABLE books DROP CONSTRAINT IF EXISTS books_pkey;
 
--- Добавляем новые первичные ключи на основе доменных атрибутов
+-- Добавляем новые сур ключи
 ALTER TABLE authors ADD PRIMARY KEY (name, birth_date);
 ALTER TABLE publishers ADD PRIMARY KEY (name, country);
 ALTER TABLE books ADD PRIMARY KEY (title, author_name, author_birth_date, publisher_name, publisher_country);
 
--- Добавляем недостающие колонки для хранения естественных ключей
 ALTER TABLE books ADD COLUMN author_name VARCHAR(100);
 ALTER TABLE books ADD COLUMN author_birth_date DATE;
 ALTER TABLE books ADD COLUMN publisher_name VARCHAR(100);
@@ -52,7 +51,7 @@ DROP TABLE temp_authors;
 DROP TABLE temp_publishers;
 DROP TABLE temp_books;
 
--- ROLLBACK (откат изменений)
+-- ROLLBACK
 ALTER TABLE books DROP CONSTRAINT IF EXISTS books_pkey CASCADE;
 ALTER TABLE authors DROP CONSTRAINT IF EXISTS authors_pkey CASCADE;
 ALTER TABLE publishers DROP CONSTRAINT IF EXISTS publishers_pkey CASCADE;
@@ -63,7 +62,6 @@ ALTER TABLE publishers ADD COLUMN id SERIAL PRIMARY KEY;
 ALTER TABLE books ADD COLUMN authorid INTEGER;
 ALTER TABLE books ADD COLUMN publisherid INTEGER;
 
--- Восстанавливаем данные
 UPDATE books b
 SET 
     authorid = a.id,
