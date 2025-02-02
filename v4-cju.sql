@@ -1,36 +1,34 @@
 /**
   @author
  */
--- Используем CTE для предварительного отбора данных
-WITH consultant_points AS (
+-- Используем CTE для выборки книг, опубликованных после 2000 года, и их авторов
+WITH recent_books AS (
     SELECT * 
-    FROM consultant_pick_up_point 
-    WHERE pointid < 5 
-      AND consultantid < 100
+    FROM Books 
+    WHERE published_year > 2000
 )
-SELECT c.firstname, c.lastname, c.jobtitle, p.name
-FROM consultant_points cp
-JOIN consultant c ON cp.consultantid = c.consultantid
-JOIN pick_up_point p ON cp.pointid = p.pointid;
+SELECT rb.title, rb.published_year, a.name AS author_name
+FROM recent_books rb
+JOIN Authors a ON rb.author_id = a.id;
 
 -- Объединяем результаты двух запросов с использованием UNION
-SELECT consultantid, pointid 
-FROM consultant_pick_up_point 
-WHERE consultantid > 30
+SELECT author_id, publisher_id 
+FROM Books 
+WHERE author_id < 20
 UNION
-SELECT consultantid, pointid 
-FROM consultant_pick_up_point 
-WHERE pointid < 20;
+SELECT author_id, publisher_id 
+FROM Books 
+WHERE published_year > 2010;
 
--- Создаём CTE для объединения consultantid и pointid
+-- Создаём CTE для объединения author_id и publisher_id
 WITH combined_ids AS (
-    SELECT consultantid AS id FROM consultant_pick_up_point
+    SELECT author_id AS id FROM Books
     UNION
-    SELECT pointid FROM consultant_pick_up_point
+    SELECT publisher_id FROM Books
 )
-SELECT c.consultantid, c.firstname, c.lastname 
-FROM consultant c
-JOIN combined_ids ci ON c.consultantid > ci.id
+SELECT a.id, a.name, a.email 
+FROM Authors a
+JOIN combined_ids ci ON a.id = ci.id
 UNION
-SELECT cust.customersid, cust.firstname, cust.lastname 
-FROM customers cust;
+SELECT p.id, p.name, p.location 
+FROM Publishers p;
